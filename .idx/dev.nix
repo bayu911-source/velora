@@ -1,19 +1,15 @@
 { pkgs, ... }: {
-  # Let Go applications use the network.
-  previews = [
-    {
-      command = ["go", "run", "velora/cmd/server/main.go"];
-      manager = "web";
-      port = 8080;
-    }
-  ];
-
-  # Needed for running Go.
+  # Needed for running Go and related tools.
   packages = [
-    pkgs.go
+    pkgs.go,
+    pkgs.gopls,
+    pkgs.golangci-lint
   ];
 
+  # Add Go tools to the PATH
   env.PATH = pkgs.lib.makeBinPath [
-    pkgs.go
+    pkgs.go,
+    pkgs.gopls,
+    pkgs.golangci-lint
   ];
 }
