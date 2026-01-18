@@ -3,5 +3,5 @@ package pkg
 
 type Agent interface {
 	Name() string
-	Run(input string) (string, error)
+	Run(memory *MemoryManager, input string) (string, error)
 }

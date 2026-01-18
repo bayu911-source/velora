@@ -1,17 +1,15 @@
 {
   "name": "Email Generation Pipeline",
+  "input": "latest advancements in AI",
   "steps": [
     {
-      "agent": "web_research",
-      "input": "latest advancements in AI"
+      "agent": "web_research"
     },
     {
-      "agent": "text_analysis",
-      "input": ""
+      "agent": "text_analysis"
     },
     {
-      "agent": "email_writer",
-      "input": ""
+      "agent": "email_writer"
     }
   ]
 }

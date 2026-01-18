@@ -3,7 +3,7 @@ package workflow
 
 import (
 	"fmt"
-	"github.com/velora-chat/velora/pkg"
+	"github.com/velora-id/velora/pkg"
 )
 
 type Runner struct {
@@ -24,21 +24,34 @@ func (r *Runner) Run(pipeline *Pipeline) (string, error) {
 	var result string
 	var err error
 
-	for _, step := range pipeline.Steps {
+	// Create a new MemoryManager for this pipeline run
+	memory := pkg.NewMemoryManager()
+
+	for i, step := range pipeline.Steps {
 		agent, ok := r.agents[step.Agent]
 		if !ok {
 			return "", fmt.Errorf("agent '%s' not found", step.Agent)
 		}
 
 		input := step.Input
-		if result != "" {
-			input = result // Use the output of the previous step as input
+		// On the first step, we can use the pipeline's global input.
+		// On subsequent steps, we use the result of the previous step.
+		if i > 0 && result != "" {
+			input = result
+		} else {
+			// Also store the initial input in memory so other agents can access it
+			memory.Set("initial_input", input)
 		}
 
-		result, err = agent.Run(input)
+		// Run the agent with memory and the current input
+		result, err = agent.Run(memory, input)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error in agent '%s': %w", step.Agent, err)
 		}
+
+		// Store the output of this step in memory for subsequent agents
+		memoryKey := fmt.Sprintf("step_%d_%s_output", i, step.Agent)
+		memory.Set(memoryKey, result)
 	}
 
 	return result, nil
