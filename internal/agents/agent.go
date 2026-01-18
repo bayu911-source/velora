@@ -1,8 +1,11 @@
 
 package agents
 
+import "context"
+
 // Agent is the interface for all AI agents.
 type Agent interface {
 	Name() string
-	Run(input string) (string, error)
+	Description() string
+	Run(ctx context.Context, input string) (string, error)
 }

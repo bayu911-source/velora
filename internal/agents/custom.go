@@ -9,15 +9,15 @@ import (
 type CustomAgent struct {
 	name   string
 	prompt string
-	gemini *services.GeminiService
+	llm    services.LLMService
 }
 
 // NewCustomAgent creates a new CustomAgent.
-func NewCustomAgent(name, prompt string, gemini *services.GeminiService) *CustomAgent {
+func NewCustomAgent(name, prompt string, llm services.LLMService) *CustomAgent {
 	return &CustomAgent{
 		name:   name,
 		prompt: prompt,
-		gemini: gemini,
+		llm:    llm,
 	}
 }
 
@@ -29,5 +29,5 @@ func (a *CustomAgent) Name() string {
 // Run runs the agent.
 func (a *CustomAgent) Run(input string) (string, error) {
 	fullPrompt := a.prompt + "\n\n" + input
-	return a.gemini.Generate(fullPrompt, "gemini-2.5-pro", 0.7, 1024)
+	return a.llm.Generate(fullPrompt, "gemini-2.5-pro", 0.7, 1024)
 }

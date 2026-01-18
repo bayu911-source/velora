@@ -2,18 +2,22 @@
 package agents
 
 import (
+	"context"
+	"fmt"
+
+	"google.golang.org/genai"
 	"velora/internal/services"
 )
 
-// EmailWriterAgent is an agent that writes emails.
+// EmailWriterAgent generates email copy.
 type EmailWriterAgent struct {
-	gemini *services.GeminiService
+	LLM services.LLM
 }
 
 // NewEmailWriterAgent creates a new EmailWriterAgent.
-func NewEmailWriterAgent(gemini *services.GeminiService) *EmailWriterAgent {
+func NewEmailWriterAgent(llm services.LLM) *EmailWriterAgent {
 	return &EmailWriterAgent{
-		gemini: gemini,
+		LLM: llm,
 	}
 }
 
@@ -22,8 +26,25 @@ func (a *EmailWriterAgent) Name() string {
 	return "email_writer"
 }
 
-// Run runs the agent.
-func (a *EmailWriterAgent) Run(input string) (string, error) {
-	prompt := "Write an email about: " + input
-	return a.gemini.Generate(prompt, "gemini-2.5-pro", 0.7, 1024)
+// Description returns a brief description of the agent.
+func (a *EmailWriterAgent) Description() string {
+	return "Generates compelling email copy based on a given prompt."
+}
+
+// Run executes the agent's primary function: writing email copy.
+func (a *EmailWriterAgent) Run(ctx context.Context, input string) (string, error) {
+	if a.LLM == nil {
+		return "", fmt.Errorf("LLM service is not initialized")
+	}
+
+	// Create a specific prompt for the email writing task.
+	prompt := fmt.Sprintf("You are an expert copywriter. Write a compelling email based on the following prompt. The email should be clear, concise, and persuasive. Do not include any explanations, just the email copy itself.\n\nPrompt: %s", input)
+
+	// Generate the email copy using the LLM service.
+	resp, err := a.LLM.GenerateContent(ctx, genai.Text(prompt))
+	if err != nil {
+		return "", fmt.Errorf("failed to write email: %w", err)
+	}
+
+	return resp, nil
 }

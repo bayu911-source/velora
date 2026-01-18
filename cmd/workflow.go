@@ -6,57 +6,84 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"velora/config"
 	"velora/internal/agents"
-	"velora/internal/services"
-	"velora/internal/workflow"
+	"velora/internal/workflows"
 )
 
-var workflowCmd = &cobra.Command{
-	Use:   "workflow",
-	Short: "Manage and run workflows",
-}
+// NewWorkflowCmd membuat perintah cobra baru untuk mengelola alur kerja.
+func NewWorkflowCmd(registry *agents.Registry) *cobra.Command {
+	workflowCmd := &cobra.Command{
+		Use:   "workflow",
+		Short: "Manage and run workflows",
+	}
 
-var runWorkflowCmd = &cobra.Command{
-	Use:   "run [json_workflow]",
-	Short: "Run a workflow from a JSON definition",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := config.LoadConfig(".")
-		if err != nil {
-			log.Fatalf("cannot load config: %v", err)
-		}
+	createWorkflowCmd := &cobra.Command{
+		Use:   "create [name] [agent1] [agent2] ...",
+		Short: "Create a new workflow",
+		Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
+			agentNames := args[1:]
 
-		jsonWorkflow := args[0]
+			// Pastikan semua agen ada di registri.
+			for _, agentName := range agentNames {
+				if _, err := registry.Get(agentName); err != nil {
+					log.Fatalf("Agen '%s' tidak ditemukan", agentName)
+				}
+			}
 
-		// Initialize Gemini Service
-		gemini, err := services.NewGeminiService(cfg.GeminiAPIKey)
-		if err != nil {
-			log.Fatalf("Failed to create Gemini service: %v", err)
-		}
+			w, err := workflows.New(name, agentNames)
+			if err != nil {
+				log.Fatalf("Gagal membuat alur kerja: %v", err)
+			}
 
-		// Register Agents
-		agentRegistry := make(map[string]agents.Agent)
-		agentRegistry["text_analysis"] = agents.NewTextAnalysisAgent(gemini)
-		agentRegistry["email_writer"] = agents.NewEmailWriterAgent(gemini)
-		agentRegistry["data_extractor"] = agents.NewDataExtractorAgent(gemini)
-		agentRegistry["web_research"] = agents.NewWebResearchAgent(gemini)
+			fmt.Printf("Alur kerja '%s' dibuat dengan ID: %s\n", w.Name, w.ID)
+		},
+	}
 
-		// Initialize Pipeline Runner
-		pipelineRunner := workflow.NewPipelineRunner(agentRegistry)
+	runWorkflowCmd := &cobra.Command{
+		Use:   "run [workflow_id] [input]",
+		Short: "Run a specific workflow",
+		Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			workflowID := args[0]
+			input := args[1]
 
-		outputs, err := pipelineRunner.Run(jsonWorkflow)
-		if err != nil {
-			log.Fatalf("Workflow failed: %v", err)
-		}
+			w, err := workflows.GetWorkflowByID(workflowID)
+			if err != nil {
+				log.Fatalf("Gagal mengambil alur kerja: %v", err)
+			}
+			if w == nil {
+				log.Fatalf("Alur kerja dengan ID '%s' tidak ditemukan", workflowID)
+			}
 
-		for step, output := range outputs {
-			fmt.Printf("%s: %s\n", step, output)
-		}
-	},
-}
+			output, err := w.Run(cmd.Context(), registry, input)
+			if err != nil {
+				log.Fatalf("Alur kerja gagal: %v", err)
+			}
 
-func init() {
+			fmt.Println(output)
+		},
+	}
+
+	listWorkflowsCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all workflows",
+		Run: func(cmd *cobra.Command, args []string) {
+			ws, err := workflows.ListWorkflows()
+			if err != nil {
+				log.Fatalf("Gagal mengambil daftar alur kerja: %v", err)
+			}
+
+			for _, w := range ws {
+				fmt.Printf("- %s: %s (%s)\n", w.ID, w.Name, w.State)
+			}
+		},
+	}
+
+	workflowCmd.AddCommand(createWorkflowCmd)
 	workflowCmd.AddCommand(runWorkflowCmd)
-	rootCmd.AddCommand(workflowCmd)
+	workflowCmd.AddCommand(listWorkflowsCmd)
+
+	return workflowCmd
 }

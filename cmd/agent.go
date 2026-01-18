@@ -6,57 +6,52 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"velora/config"
 	"velora/internal/agents"
-	"velora/internal/services"
 )
 
-var agentCmd = &cobra.Command{
-	Use:   "agent",
-	Short: "Manage and run agents",
-}
+func NewAgentCmd(registry *agents.Registry) *cobra.Command {
+	agentCmd := &cobra.Command{
+		Use:   "agent",
+		Short: "Manage and run agents",
+	}
 
-var runAgentCmd = &cobra.Command{
-	Use:   "run [agent_name] [input]",
-	Short: "Run a specific agent",
-	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := config.LoadConfig(".")
-		if err != nil {
-			log.Fatalf("cannot load config: %v", err)
-		}
+	runAgentCmd := &cobra.Command{
+		Use:   "run [agent_name] [input]",
+		Short: "Run a specific agent",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			agentName := args[0]
+			var input string
+			if len(args) > 1 {
+				input = args[1]
+			}
 
-		agentName := args[0]
-		input := args[1]
+			agent, err := registry.Get(agentName)
+			if err != nil {
+				log.Fatalf("Agent %q not found", agentName)
+			}
 
-		// Initialize Gemini Service
-		gemini, err := services.NewGeminiService(cfg.GeminiAPIKey)
-		if err != nil {
-			log.Fatalf("Failed to create Gemini service: %v", err)
-		}
+			output, err := agents.Run(cmd.Context(), agent, input)
+			if err != nil {
+				log.Fatalf("Agent failed: %v", err)
+			}
 
-		// Register and get the agent
-		agentRegistry := make(map[string]agents.Agent)
-		agentRegistry["text_analysis"] = agents.NewTextAnalysisAgent(gemini)
-		agentRegistry["email_writer"] = agents.NewEmailWriterAgent(gemini)
-		agentRegistry["data_extractor"] = agents.NewDataExtractorAgent(gemini)
-		agentRegistry["web_research"] = agents.NewWebResearchAgent(gemini)
+			fmt.Println(output)
+		},
+	}
 
-		agent, ok := agentRegistry[agentName]
-		if !ok {
-			log.Fatalf("Agent %q not found", agentName)
-		}
+	listAgentsCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all available agents",
+		Run: func(cmd *cobra.Command, args []string) {
+			for _, agent := range registry.List() {
+				fmt.Printf("- %s: %s\n", agent.Name(), agent.Description())
+			}
+		},
+	}
 
-		output, err := agent.Run(input)
-		if err != nil {
-			log.Fatalf("Agent failed: %v", err)
-		}
-
-		fmt.Println(output)
-	},
-}
-
-func init() {
 	agentCmd.AddCommand(runAgentCmd)
-	rootCmd.AddCommand(agentCmd)
+	agentCmd.AddCommand(listAgentsCmd)
+
+	return agentCmd
 }

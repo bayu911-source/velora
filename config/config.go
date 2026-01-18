@@ -5,17 +5,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config stores all configuration of the application.
+// Config stores all configuration for the application.
 // The values are read by viper from a config file or environment variable.
 type Config struct {
-	GeminiAPIKey string `mapstructure:"geminiApiKey"`
+	GeminiAPIKey    string            `mapstructure:"GEMINI_API_KEY"`
+	OpenAIAPIKey    string            `mapstructure:"OPENAI_API_KEY"`
+	LLMProvider     string            `mapstructure:"LLM_PROVIDER"`
+	GeminiAPIURL    string            `mapstructure:"GEMINI_API_URL"`
+	CustomModels    map[string]string `mapstructure:"CUSTOM_MODELS"`
 }
 
 // LoadConfig reads configuration from file or environment variables.
 func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path)
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
+	viper.SetConfigName("app")
+	viper.SetConfigType("env")
 
 	viper.AutomaticEnv()
 
