@@ -12,4 +12,8 @@
   packages = [
     pkgs.go
   ];
+
+  env.PATH = pkgs.lib.makeBinPath [
+    pkgs.go
+  ];
 }
