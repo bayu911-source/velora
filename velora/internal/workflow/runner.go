@@ -3,20 +3,20 @@ package workflow
 
 import (
 	"fmt"
-	"velora/internal/agents"
+	"github.com/velora-chat/velora/pkg"
 )
 
 type Runner struct {
-	agents map[string]agents.Agent
+	agents map[string]pkg.Agent
 }
 
 func NewRunner() *Runner {
 	return &Runner{
-		agents: make(map[string]agents.Agent),
+		agents: make(map[string]pkg.Agent),
 	}
 }
 
-func (r *Runner) RegisterAgent(agent agents.Agent) {
+func (r *Runner) RegisterAgent(agent pkg.Agent) {
 	r.agents[agent.Name()] = agent
 }
 

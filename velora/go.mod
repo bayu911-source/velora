@@ -1,5 +1,3 @@
-module velora
+module github.com/velora-chat/velora
 
-go 1.24
-
-toolchain go1.24.12
+go 1.22.2

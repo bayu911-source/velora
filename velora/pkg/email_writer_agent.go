@@ -1,15 +1,15 @@
 
-package agents
+package pkg
 
 import (
-	"velora/internal/services"
+	// No imports needed for this file after consolidation
 )
 
 type EmailWriterAgent struct {
-	gemini *services.GeminiService
+	gemini *GeminiService
 }
 
-func NewEmailWriterAgent(gemini *services.GeminiService) *EmailWriterAgent {
+func NewEmailWriterAgent(gemini *GeminiService) *EmailWriterAgent {
 	return &EmailWriterAgent{
 		gemini: gemini,
 	}

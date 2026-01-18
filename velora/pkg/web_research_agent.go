@@ -1,15 +1,15 @@
 
-package agents
+package pkg
 
 import (
-	"velora/internal/services"
+	// No imports needed for this file after consolidation
 )
 
 type WebResearchAgent struct {
-	gemini *services.GeminiService
+	gemini *GeminiService
 }
 
-func NewWebResearchAgent(gemini *services.GeminiService) *WebResearchAgent {
+func NewWebResearchAgent(gemini *GeminiService) *WebResearchAgent {
 	return &WebResearchAgent{
 		gemini: gemini,
 	}

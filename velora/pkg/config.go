@@ -1,5 +1,5 @@
 
-package config
+package pkg
 
 import (
 	"encoding/json"

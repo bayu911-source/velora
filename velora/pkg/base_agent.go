@@ -1,5 +1,5 @@
 
-package agents
+package pkg
 
 type Agent interface {
 	Name() string

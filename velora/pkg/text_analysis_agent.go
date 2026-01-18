@@ -1,15 +1,15 @@
 
-package agents
+package pkg
 
 import (
-	"velora/internal/services"
+	// No imports needed for this file after consolidation
 )
 
 type TextAnalysisAgent struct {
-	gemini *services.GeminiService
+	gemini *GeminiService
 }
 
-func NewTextAnalysisAgent(gemini *services.GeminiService) *TextAnalysisAgent {
+func NewTextAnalysisAgent(gemini *GeminiService) *TextAnalysisAgent {
 	return &TextAnalysisAgent{
 		gemini: gemini,
 	}
