@@ -5,16 +5,17 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/genai"
 	"velora/internal/services"
 )
 
 // CodeGenerator is an agent that generates code.
-type CodeGenerator struct{}
+type CodeGenerator struct {
+	llm services.LLMService
+}
 
 // NewCodeGenerator creates a new code generator agent.
-func NewCodeGenerator() *CodeGenerator {
-	return &CodeGenerator{}
+func NewCodeGenerator(llm services.LLMService) *CodeGenerator {
+	return &CodeGenerator{llm: llm}
 }
 
 // Name returns the name of the agent.
@@ -28,18 +29,7 @@ func (a *CodeGenerator) Description() string {
 }
 
 // Run executes the agent.
-func (a *CodeGenerator) Run(ctx context.Context, llm *services.LLM, input string) (string, error) {
+func (a *CodeGenerator) Run(ctx context.Context, input string) (string, error) {
 	prompt := fmt.Sprintf("Generate Go code for the following task: %s", input)
-	resp, err := llm.Model.GenerateContent(ctx, genai.Text(prompt))
-	if err != nil {
-		return "", fmt.Errorf("failed to generate code: %w", err)
-	}
-
-	if len(resp.Candidates) > 0 && len(resp.Candidates[0].Content.Parts) > 0 {
-		if txt, ok := resp.Candidates[0].Content.Parts[0].(genai.Text); ok {
-			return string(txt), nil
-		}
-	}
-
-	return "", fmt.Errorf("no code response found")
+	return a.llm.Generate(prompt, "gemini-1.5-pro", 0.7, 2048)
 }

@@ -3,7 +3,9 @@ package config
 
 // Config stores the application configuration.
 type Config struct {
-	// Add any configuration fields here.
+	GeminiAPIKey   string `mapstructure:"GEMINI_API_KEY"`
+	GeminiAPIURL   string `mapstructure:"GEMINI_API_URL"`
+	OpenAIAPIKey string `mapstructure:"OPENAI_API_KEY"`
 }
 
 // LoadConfig loads the configuration from a file.

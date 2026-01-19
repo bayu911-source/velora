@@ -11,5 +11,5 @@ import (
 type Agent interface {
 	Name() string
 	Description() string
-	Run(ctx context.Context, llm *services.LLM, input string) (string, error)
+	Run(ctx context.Context, input string) (string, error)
 }
