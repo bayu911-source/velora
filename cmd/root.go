@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"velora/config"
 	"velora/internal/agents"
+	"velora/internal/plugin"
 	"velora/internal/services"
 	"velora/persistence"
 )
@@ -24,7 +25,7 @@ var rootCmd = &cobra.Command{
 }
 
 // Execute executes the root command.
-func Execute() {
+func Execute(pluginManager *plugin.Manager) {
 	// Initialize the database
 	persistence.InitDB()
 
@@ -44,8 +45,20 @@ func Execute() {
 	// Initialize agent registry
 	registry := agents.NewRegistry(llm)
 
+	// Register built-in agents
+	registry.Register(agents.NewCodeGenerator())
+	registry.Register(agents.NewChatAgent())
+
 	// Add agent command
-	rootCmd.AddCommand(NewAgentCmd(registry))
+	agentCmd := NewAgentCmd(registry, pluginManager)
+
+	// Register agents from plugins as sub-commands
+	for _, agent := range pluginManager.Agents() {
+		agentCmd.AddCommand(NewRunnableAgentCmd(agent))
+	}
+
+	rootCmd.AddCommand(agentCmd)
+
 	// Add workflow command
 	rootCmd.AddCommand(NewWorkflowCmd(registry))
 

@@ -25,15 +25,22 @@ This is a to-do list for tracking the development of the Velora project. This pr
 
 ## Milestone: Persistence and State Management (v0.2.0)
 
-### Upcoming
+### Completed
 
 - [x] Design a database schema for storing workflow state.
 - [x] Choose a database technology (e.g., SQLite, PostgreSQL).
-- [ ] Implement a data access layer for interacting with the database.
-- [ ] Integrate the persistence layer into the workflow engine.
+- [x] Implement a data access layer for interacting with the database.
+- [x] Integrate the persistence layer into the workflow engine.
 
 **Decision:** We will use **SQLite** for its simplicity and ease of embedding within the application. This avoids the need for a separate database server.
 
-## Future Release (v0.3.0+)
+## Future Release (v0.3.0)
 
 - [ ] Create a plugin system to allow the community to extend Velora's functionality.
+
+## Future Release (v0.4.0)
+
+- [ ] **Create a Workflow Engine:**
+  - [x] Design a system for defining workflows that orchestrate multiple agents.
+  - [x] Implement a `Workflow` struct that can be executed by the engine.
+  - [x] Create a `WorkflowManager` to manage the lifecycle of workflows.

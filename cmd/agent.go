@@ -3,55 +3,54 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
 	"velora/internal/agents"
+	"velora/internal/plugin"
 )
 
-func NewAgentCmd(registry *agents.Registry) *cobra.Command {
+// NewAgentCmd creates a new agent command.
+func NewAgentCmd(registry *agents.Registry, pluginManager *plugin.Manager) *cobra.Command {
 	agentCmd := &cobra.Command{
 		Use:   "agent",
 		Short: "Manage and run agents",
-	}
-
-	runAgentCmd := &cobra.Command{
-		Use:   "run [agent_name] [input]",
-		Short: "Run a specific agent",
-		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			agentName := args[0]
-			var input string
-			if len(args) > 1 {
-				input = args[1]
-			}
-
-			agent, err := registry.Get(agentName)
-			if err != nil {
-				log.Fatalf("Agent %q not found", agentName)
-			}
-
-			output, err := agents.Run(cmd.Context(), agent, input)
-			if err != nil {
-				log.Fatalf("Agent failed: %v", err)
-			}
-
-			fmt.Println(output)
-		},
 	}
 
 	listAgentsCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List all available agents",
 		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Built-in Agents:")
 			for _, agent := range registry.List() {
 				fmt.Printf("- %s: %s\n", agent.Name(), agent.Description())
+			}
+
+			fmt.Println("\nPlugin Agents:")
+			for _, agent := range pluginManager.Agents() {
+				fmt.Printf("- %s\n", agent.Name())
 			}
 		},
 	}
 
-	agentCmd.AddCommand(runAgentCmd)
 	agentCmd.AddCommand(listAgentsCmd)
 
 	return agentCmd
+}
+
+// NewRunnableAgentCmd creates a new runnable agent command for a plugin.
+func NewRunnableAgentCmd(agent plugin.Agent) *cobra.Command {
+	return &cobra.Command{
+		Use:   fmt.Sprintf("%s [input]", agent.Name()),
+		Short: fmt.Sprintf("Run the %s agent", agent.Name()),
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			output, err := agent.Run(args[0])
+			if err != nil {
+				return fmt.Errorf("agent %s failed: %w", agent.Name(), err)
+			}
+
+			fmt.Println(output)
+			return nil
+		},
+	}
 }

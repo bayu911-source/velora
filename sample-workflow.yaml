@@ -1,0 +1,9 @@
+name: Sample Code Generation Workflow
+description: A simple workflow to generate Go code and then chat about it.
+steps:
+  - name: Generate Go Function
+    agent: CodeGenerator
+    input: "Generate a Go function that calculates the factorial of a number."
+  - name: Chat about the Function
+    agent: ChatAgent
+    input: "Explain the Go function that was just generated."

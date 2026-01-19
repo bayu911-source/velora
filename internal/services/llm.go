@@ -2,27 +2,29 @@
 package services
 
 import (
-	"fmt"
+	"context"
 
 	"velora/config"
 )
 
-// LLMService defines the interface for a Large Language Model service.
-// This allows for mocking in tests and abstracting the underlying implementation.
-type LLMService interface {
-	Generate(prompt, modelName string, temperature float32, maxOutputTokens int) (string, error)
-	GenerateStream(prompt, modelName string, temperature float32, maxOutputTokens int) (<-chan string, <-chan error)
-	Close() error
+// LLM is a service for interacting with a large language model.
+type LLM struct {
+	// In a real application, you would have a client for a specific LLM service.
 }
 
-// New creates a new LLMService based on the provided configuration.
-func New(cfg config.Config) (LLMService, error) {
-	switch cfg.LLMProvider {
-	case "gemini":
-		return NewGeminiService(cfg)
-	case "openai":
-		return NewOpenAIService(cfg)
-	default:
-		return nil, fmt.Errorf("unknown LLM provider: %s", cfg.LLMProvider)
-	}
+// New creates a new LLM service.
+func New(cfg *config.Config) (*LLM, error) {
+	// In a real application, you would use the config to set up the LLM service.
+	return &LLM{}, nil
+}
+
+// Generate generates text using the LLM.
+func (l *LLM) Generate(ctx context.Context, prompt string) (string, error) {
+	// In a real application, you would call the LLM API to generate text.
+	return "This is a generated response.", nil
+}
+
+// Close closes the LLM service.
+func (l *LLM) Close() {
+	// In a real application, you would close any connections here.
 }
