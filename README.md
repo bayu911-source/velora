@@ -1,53 +1,49 @@
 # Velora
 
-Velora adalah agen yang didukung AI berbasis Go yang dirancang untuk menjadi pendamping pengkodean yang proaktif dan efisien. Ini memanfaatkan AI Generatif Google untuk memahami dan memenuhi permintaan pengguna dalam lingkungan pengembangan mereka.
+Velora is a flexible and extensible framework for building and managing AI agents and workflows. It allows developers to create complex, multi-step processes by chaining together different AI agents, each specialized for a specific task.
 
-## Fitur
+## Features
 
-*   **Agen yang Didukung AI**: Velora menggunakan serangkaian agen AI untuk melakukan berbagai tugas, termasuk:
-    *   **Pembangun Aplikasi**: Membangun aplikasi berdasarkan spesifikasi pengguna.
-    *   **Agen Obrolan**: Terlibat dalam interaksi percakapan dengan pengguna.
-    *   **Generator Kode**: Menghasilkan cuplikan kode dan file.
-    *   **Ekstraktor Data**: Mengekstrak informasi dari berbagai sumber.
-*   **Arsitektur Plugin**: Fungsionalitas Velora dapat diperluas melalui sistem plugin sederhana.
-*   **Berbasis Go**: Dibangun dengan Go untuk kinerja dan keandalan.
-*   **Google Generative AI**: Didukung oleh model AI generatif canggih dari Google.
+*   **Agent-Based Architecture:** Build modular agents that can be reused across different workflows.
+*   **Workflow Management:** Define, run, and monitor complex workflows with ease.
+*   **Plugin System:** Extend Velora's functionality with custom plugins.
+*   **Go & Gemini:** Built with the power of Go and Google's Gemini generative AI models.
 
-## Memulai
+## Getting Started
 
-### Prasyarat
+### Prerequisites
 
-*   Go 1.18 atau lebih baru
-*   Variabel lingkungan `GEMINI_API_KEY` yang valid
+*   Go 1.18 or later
+*   A valid `GEMINI_API_KEY` environment variable
 
-### Instalasi
+### Installation
 
-1.  Kloning repositori:
+1.  Clone the repository:
 
     ```bash
     git clone https://github.com/velora-id/velora.git
     ```
 
-2.  Arahkan ke direktori proyek:
+2.  Navigate to the project directory:
 
     ```bash
     cd velora
     ```
 
-3.  Instal dependensi:
+3.  Install dependencies:
 
     ```bash
     go mod tidy
     ```
 
-## Penggunaan
+## Usage
 
-Untuk menjalankan agen Velora, gunakan perintah berikut:
+To run the Velora agent, use the following command:
 
 ```bash
 go run main.go
 ```
 
-## Berkontribusi
+## Contributing
 
-Kontribusi sangat diterima! Jangan ragu untuk mengirimkan *pull request* atau membuka *issue*.
+Contributions are welcome! Please feel free to submit a pull request or open an issue.

@@ -2,6 +2,7 @@
 package plugin
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,14 +11,16 @@ import (
 
 // Agent is the interface that all agent plugins must implement.
 // Agents are the basic building blocks of Velora. They are responsible for
-// performing a specific task.	ype Agent interface {
+// performing a specific task.
+type Agent interface {
 	// Name returns the name of the agent.
 	Name() string
-	// Run executes the agent with the given input and returns the output.
-	Run(input string) (string, error)
+	// Execute executes the agent with the given input and returns the output.
+	Execute(ctx context.Context, input string) (string, error)
 }
 
-// Manager is responsible for loading and managing agent plugins.	ype Manager struct {
+// Manager is responsible for loading and managing agent plugins.
+type Manager struct {
 	agents map[string]Agent
 }
 

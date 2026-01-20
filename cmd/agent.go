@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -44,7 +45,9 @@ func NewRunnableAgentCmd(agent plugin.Agent) *cobra.Command {
 		Short: fmt.Sprintf("Run the %s agent", agent.Name()),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			output, err := agent.Run(args[0])
+			// Note: We're passing a background context here.
+			// For more complex scenarios, you might want to handle context cancellation.
+			output, err := agent.Execute(context.Background(), args[0])
 			if err != nil {
 				return fmt.Errorf("agent %s failed: %w", agent.Name(), err)
 			}
