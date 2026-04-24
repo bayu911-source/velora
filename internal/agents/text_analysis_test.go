@@ -1,4 +1,3 @@
-
 package agents
 
 import (
@@ -6,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"velora/internal/services"
 )
 
 // MockLLM is a mock implementation of the LLM interface for testing.
