@@ -1,21 +1,19 @@
-
 package agents
 
 import (
 	"context"
 	"fmt"
 
-	"google.golang.org/genai"
 	"velora/internal/services"
 )
 
 // WebResearchAgent performs web research and summarizes the findings.
 type WebResearchAgent struct {
-	LLM services.LLM
+	LLM *services.LLM
 }
 
 // NewWebResearchAgent creates a new WebResearchAgent.
-func NewWebResearchAgent(llm services.LLM) *WebResearchAgent {
+func NewWebResearchAgent(llm *services.LLM) *WebResearchAgent {
 	return &WebResearchAgent{
 		LLM: llm,
 	}
@@ -31,8 +29,8 @@ func (a *WebResearchAgent) Description() string {
 	return "Performs web research on a given topic and provides a detailed summary."
 }
 
-// Run executes the agent's primary function: web research.
-func (a *WebResearchAgent) Run(ctx context.Context, input string) (string, error) {
+// Execute executes the agent's primary function: web research.
+func (a *WebResearchAgent) Execute(ctx context.Context, input string) (string, error) {
 	if a.LLM == nil {
 		return "", fmt.Errorf("LLM service is not initialized")
 	}
@@ -42,7 +40,7 @@ func (a *WebResearchAgent) Run(ctx context.Context, input string) (string, error
 	prompt := fmt.Sprintf("You are a world-class researcher. Research the following topic and provide a detailed summary of your findings. Include key facts, figures, and sources where possible. Do not include any explanations, just the research summary itself.\n\nTopic: %s", input)
 
 	// Generate the research summary using the LLM service.
-	resp, err := a.LLM.GenerateContent(ctx, genai.Text(prompt))
+	resp, err := a.LLM.Generate(ctx, prompt)
 	if err != nil {
 		return "", fmt.Errorf("failed to perform web research: %w", err)
 	}

@@ -1,4 +1,3 @@
-
 package agents
 
 import (
@@ -9,12 +8,12 @@ import (
 
 // ChatAgent is a conversational agent.
 type ChatAgent struct {
-	llm services.LLM
+	llm *services.LLM
 }
 
 // NewChatAgent creates a new ChatAgent.
-func NewChatAgent() *ChatAgent {
-	return &ChatAgent{}
+func NewChatAgent(llm *services.LLM) *ChatAgent {
+	return &ChatAgent{llm: llm}
 }
 
 // Name returns the name of the agent.

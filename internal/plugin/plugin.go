@@ -1,4 +1,3 @@
-
 package plugin
 
 import (
@@ -15,6 +14,8 @@ import (
 type Agent interface {
 	// Name returns the name of the agent.
 	Name() string
+	// Description returns the description of the agent.
+	Description() string
 	// Execute executes the agent with the given input and returns the output.
 	Execute(ctx context.Context, input string) (string, error)
 }

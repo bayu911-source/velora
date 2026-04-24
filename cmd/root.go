@@ -1,4 +1,3 @@
-
 package cmd
 
 import (
@@ -6,12 +5,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/spf13/cobra"
 	"velora/config"
 	"velora/internal/agents"
 	"velora/internal/plugin"
 	"velora/internal/services"
 	"velora/persistence"
+
+	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
@@ -46,8 +46,8 @@ func Execute(pluginManager *plugin.Manager) {
 	registry := agents.NewRegistry(llm)
 
 	// Register built-in agents
-	registry.Register(agents.NewCodeGenerator())
-	registry.Register(agents.NewChatAgent())
+	registry.Register(agents.NewCodeGenerator(llm))
+	registry.Register(agents.NewChatAgent(llm))
 
 	// Add agent command
 	agentCmd := NewAgentCmd(registry, pluginManager)
@@ -61,6 +61,9 @@ func Execute(pluginManager *plugin.Manager) {
 
 	// Add workflow command
 	rootCmd.AddCommand(NewWorkflowCmd(registry))
+
+	// Add server command
+	rootCmd.AddCommand(NewServerCmd(registry))
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

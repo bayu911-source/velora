@@ -1,8 +1,7 @@
-
 package agents
 
 import (
-	"context"
+	"fmt"
 
 	"velora/internal/services"
 )
@@ -30,7 +29,7 @@ func (r *Registry) Register(agent Agent) {
 func (r *Registry) Get(name string) (Agent, error) {
 	agent, ok := r.agents[name]
 	if !ok {
-		return nil, context.ErrNoDeadline
+		return nil, fmt.Errorf("agent %s not found", name)
 	}
 	return agent, nil
 }

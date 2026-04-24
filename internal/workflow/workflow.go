@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,12 +24,13 @@ const (
 // Workflow defines a sequence of agents to be executed.
 // This struct is now primarily a data container.
 type Workflow struct {
-	ID        string
-	Name      string
-	State     State
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	steps     []*Step
+	ID          string
+	Name        string
+	Description string
+	State       State
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	steps       []*Step
 }
 
 // Step represents a single step in a workflow.
@@ -43,11 +45,12 @@ type Step struct {
 
 // New creates a new Workflow instance in memory.
 // It no longer saves the workflow to the database.
-func New(name string, agentNames []string) *Workflow {
+func New(name, description string, agentNames []string) *Workflow {
 	w := &Workflow{
-		ID:    uuid.New().String(),
-		Name:  name,
-		State: StatePending,
+		ID:          uuid.New().String(),
+		Name:        name,
+		Description: description,
+		State:       StatePending,
 	}
 
 	for _, agentName := range agentNames {

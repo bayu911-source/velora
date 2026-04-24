@@ -33,8 +33,8 @@ func (a *AppBuilderAgent) Description() string {
 	return "Builds a simple application based on a description, including technology stack, file structure, and code."
 }
 
-// Run executes the agent's primary function: building an application.
-func (a *AppBuilderAgent) Run(ctx context.Context, input string) (string, error) {
+// Execute executes the agent's primary function: building an application.
+func (a *AppBuilderAgent) Execute(ctx context.Context, input string) (string, error) {
 	if a.llm == nil {
 		return "", fmt.Errorf("LLM service is not initialized")
 	}

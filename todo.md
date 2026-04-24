@@ -36,11 +36,11 @@ This is a to-do list for tracking the development of the Velora project. This pr
 
 ## Future Release (v0.3.0)
 
-- [ ] Create a plugin system to allow the community to extend Velora's functionality.
+- [x] Create a plugin system to allow the community to extend Velora's functionality.
 
 ## Future Release (v0.4.0)
 
-- [ ] **Create a Workflow Engine:**
+- [x] **Create a Workflow Engine:**
   - [x] Design a system for defining workflows that orchestrate multiple agents.
   - [x] Implement a `Workflow` struct that can be executed by the engine.
   - [x] Create a `WorkflowManager` to manage the lifecycle of workflows.

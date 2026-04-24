@@ -30,7 +30,6 @@ func (e *Engine) Run(ctx context.Context, w *Workflow, initialInput string) (str
 
 	var currentInput = initialInput
 	var output string
-	var err error
 
 	for _, step := range w.Steps() {
 		agent, err := e.agentRegistry.Get(step.AgentName)

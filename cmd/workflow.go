@@ -52,7 +52,7 @@ func NewWorkflowCmd(registry *agents.Registry) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
 			agentNames := args[1]
-			w := workflow.New(name, agents.SplitAgents(agentNames))
+			w := workflow.New(name, "", agents.SplitAgents(agentNames))
 			if err := repo.Save(w); err != nil {
 				return fmt.Errorf("failed to create workflow: %w", err)
 			}
@@ -61,7 +61,25 @@ func NewWorkflowCmd(registry *agents.Registry) *cobra.Command {
 		},
 	}
 
-	workflowCmd.AddCommand(runCmd, createCmd)
+	loadCmd := &cobra.Command{
+		Use:   "load [file]",
+		Short: "Load a workflow from a YAML file",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			manager := workflow.NewManager()
+			w, err := manager.Load(args[0])
+			if err != nil {
+				return fmt.Errorf("failed to load workflow: %w", err)
+			}
+			if err := repo.Save(w); err != nil {
+				return fmt.Errorf("failed to save workflow: %w", err)
+			}
+			fmt.Printf("Workflow '%s' loaded and saved with ID: %s\n", w.Name, w.ID)
+			return nil
+		},
+	}
+
+	workflowCmd.AddCommand(runCmd, createCmd, loadCmd)
 
 	return workflowCmd
 }

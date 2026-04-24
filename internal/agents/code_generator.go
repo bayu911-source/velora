@@ -1,4 +1,3 @@
-
 package agents
 
 import (
@@ -9,12 +8,12 @@ import (
 
 // CodeGenerator is an agent that generates code.
 type CodeGenerator struct {
-	llm services.LLM
+	llm *services.LLM
 }
 
 // NewCodeGenerator creates a new CodeGenerator.
-func NewCodeGenerator() *CodeGenerator {
-	return &CodeGenerator{}
+func NewCodeGenerator(llm *services.LLM) *CodeGenerator {
+	return &CodeGenerator{llm: llm}
 }
 
 // Name returns the name of the agent.

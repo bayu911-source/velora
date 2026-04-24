@@ -1,4 +1,3 @@
-
 package workflows
 
 import (
@@ -6,19 +5,20 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"velora/internal/agents"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // MockAgent is a mock implementation of the Agent interface for testing.
 type MockAgent struct {
-	RunFunc  func(ctx context.Context, input string) (string, error)
-	NameFunc func() string
+	ExecuteFunc func(ctx context.Context, input string) (string, error)
+	NameFunc    func() string
 }
 
-// Run calls the mock RunFunc.
-func (m *MockAgent) Run(ctx context.Context, input string) (string, error) {
-	return m.RunFunc(ctx, input)
+// Execute calls the mock ExecuteFunc.
+func (m *MockAgent) Execute(ctx context.Context, input string) (string, error) {
+	return m.ExecuteFunc(ctx, input)
 }
 
 // Name calls the mock NameFunc.
@@ -35,7 +35,7 @@ func TestWorkflow_Run(t *testing.T) {
 	// Test case 1: Successful workflow execution
 	t.Run("successful workflow execution", func(t *testing.T) {
 		agent1 := &MockAgent{
-			RunFunc: func(ctx context.Context, input string) (string, error) {
+			ExecuteFunc: func(ctx context.Context, input string) (string, error) {
 				return "step 1 output", nil
 			},
 			NameFunc: func() string {
@@ -44,7 +44,7 @@ func TestWorkflow_Run(t *testing.T) {
 		}
 
 		agent2 := &MockAgent{
-			RunFunc: func(ctx context.Context, input string) (string, error) {
+			ExecuteFunc: func(ctx context.Context, input string) (string, error) {
 				assert.Equal(t, "step 1 output", input)
 				return "final output", nil
 			},
@@ -81,7 +81,7 @@ func TestWorkflow_Run(t *testing.T) {
 	// Test case 2: Workflow execution fails at a step
 	t.Run("workflow execution fails", func(t *testing.T) {
 		agent1 := &MockAgent{
-			RunFunc: func(ctx context.Context, input string) (string, error) {
+			ExecuteFunc: func(ctx context.Context, input string) (string, error) {
 				return "step 1 output", nil
 			},
 			NameFunc: func() string {
@@ -91,7 +91,7 @@ func TestWorkflow_Run(t *testing.T) {
 
 		expectedErr := errors.New("agent 2 failed")
 		agent2 := &MockAgent{
-			RunFunc: func(ctx context.Context, input string) (string, error) {
+			ExecuteFunc: func(ctx context.Context, input string) (string, error) {
 				return "", expectedErr
 			},
 			NameFunc: func() string {
