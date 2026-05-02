@@ -1,26 +1,16 @@
 # syntax=docker/dockerfile:1
 
-# Build stage
-FROM golang:1.21-alpine AS build
+FROM golang:1.24-alpine AS build
 
-WORKDIR /src
+WORKDIR /app
 
-# Copy sources and download modules
-COPY go.mod go.sum .
+COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+COPY . ./
 
-# Build the binary
-RUN CGO_ENABLED=0 go build -o /bin/helloserver
+RUN CGO_ENABLED=0 go build -o /usr/local/bin/velora ./...
 
-# Final stage
-FROM scratch
-
-# Copy the static binary
-COPY --from=build /bin/helloserver /
-
-# The service listens on port 8080. 
-# The user can override this with the -addr flag.
+FROM gcr.io/distroless/base-debian11
+COPY --from=build /usr/local/bin/velora /usr/local/bin/velora
 EXPOSE 8080
-
-ENTRYPOINT ["/helloserver"]
+ENTRYPOINT ["/usr/local/bin/velora", "server"]

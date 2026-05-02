@@ -1,23 +1,40 @@
 package cmd
 
 import (
-	"log"
+    "fmt"
+    "log"
 
-	"github.com/spf13/cobra"
-	"velora/internal/agents"
-	"velora/internal/server"
+    "github.com/spf13/cobra"
+    "go.uber.org/zap"
+
+    "velora/config"
+    "velora/internal/database"
+    "velora/internal/repositories"
+    serverpkg "velora/internal/server"
 )
 
-// NewServerCmd creates a new server command.
-func NewServerCmd(registry *agents.Registry) *cobra.Command {
+func NewServerCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "server",
 		Short: "Start the Velora HTTP server",
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Println("Starting server on :8080")
-			srv := server.NewServer(registry)
-			if err := srv.ListenAndServe(); err != nil {
-				log.Fatalf("could not start server: %v", err)
+			cfg, err := config.LoadConfig(".")
+			if err != nil {
+				log.Fatalf("failed to load config: %v", err)
+			}
+
+			db, err := database.Connect(cfg)
+			if err != nil {
+				log.Fatalf("failed to connect to database: %v", err)
+			}
+
+			repo := repositories.NewRepository(db)
+			logger, _ := zap.NewProduction()
+			app := serverpkg.NewApp(cfg, repo, logger)
+			addr := fmt.Sprintf(":%s", cfg.Port)
+			log.Printf("starting Velora API on %s", addr)
+			if err := app.Listen(addr); err != nil {
+				log.Fatalf("server exited: %v", err)
 			}
 		},
 	}
