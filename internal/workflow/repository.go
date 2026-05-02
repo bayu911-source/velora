@@ -21,12 +21,18 @@ func (r *Repository) Save(w *Workflow) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
 
 	query := `
-		INSERT INTO workflows (id, name, state, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO workflows (id, name, description, state, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			name = excluded.name,
+			description = excluded.description,
 			state = excluded.state,
 			updated_at = excluded.updated_at;
 	`
@@ -36,8 +42,11 @@ func (r *Repository) Save(w *Workflow) error {
 		w.CreatedAt = w.UpdatedAt
 	}
 
-	if _, err := tx.Exec(query, w.ID, w.Name, w.State, w.CreatedAt, w.UpdatedAt); err != nil {
-		tx.Rollback()
+	if _, err = tx.Exec(query, w.ID, w.Name, w.Description, w.State, w.CreatedAt, w.UpdatedAt); err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec(`DELETE FROM workflow_steps WHERE workflow_id = ?`, w.ID); err != nil {
 		return err
 	}
 
@@ -46,8 +55,7 @@ func (r *Repository) Save(w *Workflow) error {
 		VALUES (?, ?, ?, ?, ?);
 	`
 	for _, step := range w.Steps() {
-		if _, err := tx.Exec(stepQuery, w.ID, step.AgentName, step.Input, step.Output, step.ExecutedAt); err != nil {
-			tx.Rollback()
+		if _, err = tx.Exec(stepQuery, w.ID, step.AgentName, step.Input, step.Output, step.ExecutedAt); err != nil {
 			return err
 		}
 	}
@@ -55,13 +63,36 @@ func (r *Repository) Save(w *Workflow) error {
 	return tx.Commit()
 }
 
+// DeleteByID deletes a workflow and its associated steps.
+func (r *Repository) DeleteByID(id string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if _, err = tx.Exec(`DELETE FROM workflow_steps WHERE workflow_id = ?`, id); err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec(`DELETE FROM workflows WHERE id = ?`, id); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 // FindByID retrieves a workflow by its ID.
 func (r *Repository) FindByID(id string) (*Workflow, error) {
-	query := `SELECT id, name, state, created_at, updated_at FROM workflows WHERE id = ?`
+	query := `SELECT id, name, description, state, created_at, updated_at FROM workflows WHERE id = ?`
 	row := r.db.QueryRow(query, id)
 
 	w := &Workflow{}
-	err := row.Scan(&w.ID, &w.Name, &w.State, &w.CreatedAt, &w.UpdatedAt)
+	err := row.Scan(&w.ID, &w.Name, &w.Description, &w.State, &w.CreatedAt, &w.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // Not found
@@ -101,7 +132,7 @@ func (r *Repository) findStepsByWorkflowID(workflowID string) ([]*Step, error) {
 
 // ListAll retrieves all workflows from the database.
 func (r *Repository) ListAll() ([]*Workflow, error) {
-	query := `SELECT id, name, state, created_at, updated_at FROM workflows`
+	query := `SELECT id, name, description, state, created_at, updated_at FROM workflows`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -111,7 +142,7 @@ func (r *Repository) ListAll() ([]*Workflow, error) {
 	var workflows []*Workflow
 	for rows.Next() {
 		w := &Workflow{}
-		if err := rows.Scan(&w.ID, &w.Name, &w.State, &w.CreatedAt, &w.UpdatedAt); err != nil {
+		if err := rows.Scan(&w.ID, &w.Name, &w.Description, &w.State, &w.CreatedAt, &w.UpdatedAt); err != nil {
 			return nil, err
 		}
 		workflows = append(workflows, w)

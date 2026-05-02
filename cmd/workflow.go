@@ -79,7 +79,66 @@ func NewWorkflowCmd(registry *agents.Registry) *cobra.Command {
 		},
 	}
 
-	workflowCmd.AddCommand(runCmd, createCmd, loadCmd)
+	listCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all saved workflows",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			workflows, err := repo.ListAll()
+			if err != nil {
+				return fmt.Errorf("failed to list workflows: %w", err)
+			}
+			if len(workflows) == 0 {
+				fmt.Println("No workflows found.")
+				return nil
+			}
+			fmt.Println("Workflows:")
+			for _, w := range workflows {
+				fmt.Printf("- %s: %s (state=%s)\n", w.ID, w.Name, w.State)
+			}
+			return nil
+		},
+	}
+
+	showCmd := &cobra.Command{
+		Use:   "show [workflow-id]",
+		Short: "Show details for a saved workflow",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			w, err := repo.FindByID(args[0])
+			if err != nil {
+				return fmt.Errorf("failed to find workflow: %w", err)
+			}
+			if w == nil {
+				return fmt.Errorf("workflow '%s' not found", args[0])
+			}
+			fmt.Printf("ID: %s\nName: %s\nState: %s\nCreated: %s\nUpdated: %s\n",
+				w.ID, w.Name, w.State, w.CreatedAt.Format("2006-01-02 15:04:05"), w.UpdatedAt.Format("2006-01-02 15:04:05"))
+			if len(w.Steps()) == 0 {
+				fmt.Println("No workflow steps recorded.")
+				return nil
+			}
+			fmt.Println("Steps:")
+			for i, step := range w.Steps() {
+				fmt.Printf("  %d. %s\n    Input: %s\n    Output: %s\n", i+1, step.AgentName, step.Input, step.Output)
+			}
+			return nil
+		},
+	}
+
+	deleteCmd := &cobra.Command{
+		Use:   "delete [workflow-id]",
+		Short: "Delete a workflow and its history",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := repo.DeleteByID(args[0]); err != nil {
+				return fmt.Errorf("failed to delete workflow: %w", err)
+			}
+			fmt.Printf("Workflow '%s' deleted.\n", args[0])
+			return nil
+		},
+	}
+
+	workflowCmd.AddCommand(runCmd, createCmd, loadCmd, listCmd, showCmd, deleteCmd)
 
 	return workflowCmd
 }

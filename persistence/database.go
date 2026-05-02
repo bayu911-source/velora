@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -61,6 +62,7 @@ func createTables() {
 		CREATE TABLE IF NOT EXISTS workflows (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
+			description TEXT,
 			state TEXT NOT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -71,6 +73,12 @@ func createTables() {
 	_, err := DB.Exec(createWorkflowsTableSQL)
 	if err != nil {
 		log.Fatalf("failed to create workflows table: %v", err)
+	}
+
+	// Ensure older databases include the description column.
+	_, err = DB.Exec(`ALTER TABLE workflows ADD COLUMN description TEXT`) 
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		log.Fatalf("failed to add description column to workflows table: %v", err)
 	}
 
 	// SQL statement to create the workflow_steps table.

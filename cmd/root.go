@@ -52,8 +52,9 @@ func Execute(pluginManager *plugin.Manager) {
 	// Add agent command
 	agentCmd := NewAgentCmd(registry, pluginManager)
 
-	// Register agents from plugins as sub-commands
+	// Register agents from plugins in both CLI and workflow registry
 	for _, agent := range pluginManager.Agents() {
+		registry.Register(agent)
 		agentCmd.AddCommand(NewRunnableAgentCmd(agent))
 	}
 

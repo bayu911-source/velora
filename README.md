@@ -52,8 +52,42 @@ go run main.go
 - `velora agent list`: List all available agents
 - `velora workflow create <name> <agents>`: Create a new workflow
 - `velora workflow run <id> <input>`: Run a workflow
-- `velora workflow load <file>`: Load workflow from YAML file
+- `velora workflow load <file>`: Load a workflow from YAML file
+- `velora workflow list`: List saved workflows
+- `velora workflow show <id>`: Show workflow details and step history
+- `velora workflow delete <id>`: Delete a workflow and its history
 - `velora server`: Start the HTTP server for UI access
+
+### HTTP Server Endpoints
+
+- `GET /api/agents`: List available agents
+- `GET /api/workflows`: List saved workflows
+- `POST /api/workflows`: Create a new workflow with JSON body `{ "name": "...", "description": "...", "agents": ["AgentA", "AgentB"] }`
+- `GET /api/workflows/{id}`: Show workflow details and steps
+- `POST /api/workflows/{id}/run`: Run a saved workflow with JSON body `{ "input": "..." }`
+- `DELETE /api/workflows/{id}`: Delete a saved workflow
+
+### UI
+
+The Velora UI is built with React and served from `ui/build` when the backend server is running.
+
+To develop the UI locally:
+
+```bash
+cd ui
+npm install
+npm start
+```
+
+To build the production UI assets:
+
+```bash
+cd ui
+npm install
+npm run build
+```
+
+Then start the backend with `go run main.go` and open the UI from the built files or use the React dev server with proxy.
 
 ### Environment Variables
 
