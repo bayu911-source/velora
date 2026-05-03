@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-const WorkflowList = () => {
+const API_BASE = '/api/v1';
+
+const WorkflowList = ({ token }) => {
   const [workflows, setWorkflows] = useState([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
   const [agents, setAgents] = useState([]);
@@ -9,18 +11,25 @@ const WorkflowList = () => {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    agents: '',
+    agentIdentifiers: '',
+    actionPrompt: '',
   });
   const [runInput, setRunInput] = useState('');
-  const [runOutput, setRunOutput] = useState('');
 
   useEffect(() => {
-    fetchAgents();
-    fetchWorkflows();
-  }, []);
+    if (token) {
+      fetchAgents();
+      fetchWorkflows();
+    }
+  }, [token]);
+
+  const authHeaders = () => ({
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  });
 
   const fetchAgents = () => {
-    fetch('/api/agents')
+    fetch(`${API_BASE}/agents`, { headers: authHeaders() })
       .then((response) => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -32,7 +41,7 @@ const WorkflowList = () => {
   };
 
   const fetchWorkflows = () => {
-    fetch('/api/workflows')
+    fetch(`${API_BASE}/workflows`, { headers: authHeaders() })
       .then((response) => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -44,7 +53,7 @@ const WorkflowList = () => {
   };
 
   const fetchWorkflowDetails = (id) => {
-    fetch(`/api/workflows/${id}`)
+    fetch(`${API_BASE}/workflows/${id}`, { headers: authHeaders() })
       .then((response) => {
         if (!response.ok) {
           throw new Error('Failed to load workflow details');
@@ -53,10 +62,35 @@ const WorkflowList = () => {
       })
       .then((data) => {
         setSelectedWorkflow(data);
-        setRunOutput('');
+        setRunInput('');
         setError(null);
       })
       .catch((error) => setError(error.message));
+  };
+
+  const buildActions = () => {
+    const identifiers = form.agentIdentifiers
+      .split(',')
+      .map((agent) => agent.trim())
+      .filter(Boolean);
+
+    if (identifiers.length === 0) {
+      throw new Error('Please enter at least one agent identifier');
+    }
+
+    return identifiers.map((identifier) => {
+      const agent = agents.find(
+        (item) => item.id === identifier || item.name.toLowerCase() === identifier.toLowerCase(),
+      );
+      if (!agent) {
+        throw new Error(`Agent not found: ${identifier}`);
+      }
+      return {
+        name: agent.name,
+        agent_id: agent.id,
+        prompt: form.actionPrompt || agent.prompt || '',
+      };
+    });
   };
 
   const handleCreate = async (event) => {
@@ -64,20 +98,22 @@ const WorkflowList = () => {
     setStatusMessage('');
     setError(null);
 
-    const agentsArray = form.agents
-      .split(',')
-      .map((agent) => agent.trim())
-      .filter(Boolean);
+    let actions = [];
+    try {
+      actions = buildActions();
+    } catch (err) {
+      setError(err.message);
+      return;
+    }
 
-    const response = await fetch('/api/workflows', {
+    const response = await fetch(`${API_BASE}/workflows`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(),
       body: JSON.stringify({
         name: form.name,
         description: form.description,
-        agents: agentsArray,
+        trigger: 'manual',
+        actions,
       }),
     });
 
@@ -89,7 +125,7 @@ const WorkflowList = () => {
 
     const workflow = await response.json();
     setWorkflows((prev) => [...prev, workflow]);
-    setForm({ name: '', description: '', agents: '' });
+    setForm({ name: '', description: '', agentIdentifiers: '', actionPrompt: '' });
     setStatusMessage('Workflow created successfully');
   };
 
@@ -98,14 +134,12 @@ const WorkflowList = () => {
     if (!selectedWorkflow) {
       return;
     }
-    setStatusMessage('Running workflow...');
+    setStatusMessage('Enqueuing workflow run...');
     setError(null);
 
-    const response = await fetch(`/api/workflows/${selectedWorkflow.id}/run`, {
+    const response = await fetch(`${API_BASE}/workflows/${selectedWorkflow.id}/run`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(),
       body: JSON.stringify({ input: runInput }),
     });
 
@@ -117,8 +151,7 @@ const WorkflowList = () => {
     }
 
     const result = await response.json();
-    setRunOutput(result.output || '');
-    setStatusMessage(`Workflow completed: ${result.state}`);
+    setStatusMessage(result.status ? `Workflow ${result.status}` : 'Workflow run queued');
     fetchWorkflows();
     fetchWorkflowDetails(selectedWorkflow.id);
   };
@@ -127,8 +160,9 @@ const WorkflowList = () => {
     setStatusMessage('Deleting workflow...');
     setError(null);
 
-    const response = await fetch(`/api/workflows/${id}`, {
+    const response = await fetch(`${API_BASE}/workflows/${id}`, {
       method: 'DELETE',
+      headers: authHeaders(),
     });
 
     if (!response.ok) {
@@ -141,7 +175,7 @@ const WorkflowList = () => {
     setWorkflows((prev) => prev.filter((workflow) => workflow.id !== id));
     if (selectedWorkflow?.id === id) {
       setSelectedWorkflow(null);
-      setRunOutput('');
+      setRunInput('');
     }
     setStatusMessage('Workflow deleted successfully');
   };
@@ -151,13 +185,46 @@ const WorkflowList = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  if (error) {
-    return <div className="error">Error: {error}</div>;
+  const renderWorkflowActions = () => {
+    if (!selectedWorkflow) {
+      return null;
+    }
+
+    let actions = [];
+    if (Array.isArray(selectedWorkflow.actions)) {
+      actions = selectedWorkflow.actions;
+    } else if (selectedWorkflow.actions) {
+      try {
+        actions = JSON.parse(selectedWorkflow.actions);
+      } catch (err) {
+        actions = [];
+      }
+    }
+
+    return (
+      <div>
+        <h4>Actions</h4>
+        <ol>
+          {actions.map((action, index) => (
+            <li key={`${action.agent_id || action.name}-${index}`}>
+              <strong>{action.name || action.agent_id}</strong>
+              <div>Agent: {action.agent_id}</div>
+              <div>Prompt: {action.prompt || '—'}</div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    );
+  };
+
+  if (!token) {
+    return <div>Please log in to manage workflows.</div>;
   }
 
   return (
-    <div>
+    <div className="dashboard-panel">
       <h2>Workflows</h2>
+      {error && <div className="error">Error: {error}</div>}
       <div className="workflow-grid">
         <section className="workflow-list">
           <h3>Create Workflow</h3>
@@ -171,8 +238,23 @@ const WorkflowList = () => {
               <input name="description" value={form.description} onChange={handleChange} />
             </label>
             <label>
-              Agents (comma separated)
-              <input name="agents" value={form.agents} onChange={handleChange} required />
+              Agents (name or ID, comma separated)
+              <input
+                name="agentIdentifiers"
+                value={form.agentIdentifiers}
+                onChange={handleChange}
+                required
+                placeholder="e.g. Lead Generator, agent-uuid"
+              />
+            </label>
+            <label>
+              Action Prompt
+              <input
+                name="actionPrompt"
+                value={form.actionPrompt}
+                onChange={handleChange}
+                placeholder="Optional override prompt for all actions"
+              />
             </label>
             <button type="submit">Create</button>
           </form>
@@ -185,7 +267,7 @@ const WorkflowList = () => {
                   <button type="button" onClick={() => fetchWorkflowDetails(workflow.id)}>
                     {workflow.name}
                   </button>
-                  <span>({workflow.state})</span>
+                  <span>({workflow.status || 'unknown'})</span>
                 </div>
                 <div className="workflow-actions">
                   <button type="button" className="danger" onClick={() => handleDelete(workflow.id)}>
@@ -195,6 +277,16 @@ const WorkflowList = () => {
               </li>
             ))}
           </ul>
+
+          <div className="workflow-helper">
+            <h4>Available agents</h4>
+            <p>Use agent names or IDs above when creating a workflow.</p>
+            <ul>
+              {agents.slice(0, 10).map((agent) => (
+                <li key={agent.id}>{agent.name} ({agent.id})</li>
+              ))}
+            </ul>
+          </div>
         </section>
 
         <section className="workflow-details">
@@ -203,19 +295,9 @@ const WorkflowList = () => {
             <div>
               <p><strong>Name:</strong> {selectedWorkflow.name}</p>
               <p><strong>Description:</strong> {selectedWorkflow.description || '—'}</p>
-              <p><strong>State:</strong> {selectedWorkflow.state}</p>
-              <div>
-                <h4>Steps</h4>
-                <ol>
-                  {selectedWorkflow.steps.map((step, index) => (
-                    <li key={`${step.AgentName}-${index}`}>
-                      <strong>{step.AgentName}</strong>
-                      <div>Input: {step.Input || '—'}</div>
-                      <div>Output: {step.Output || '—'}</div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+              <p><strong>Status:</strong> {selectedWorkflow.status || 'unknown'}</p>
+              <p><strong>Trigger:</strong> {selectedWorkflow.trigger || 'manual'}</p>
+              {renderWorkflowActions()}
 
               <form onSubmit={handleRun} className="workflow-run-form">
                 <label>
@@ -224,13 +306,6 @@ const WorkflowList = () => {
                 </label>
                 <button type="submit">Run Workflow</button>
               </form>
-
-              {runOutput && (
-                <div className="workflow-output">
-                  <h4>Run Output</h4>
-                  <pre>{runOutput}</pre>
-                </div>
-              )}
             </div>
           ) : (
             <p>Select a workflow to see details and run it.</p>

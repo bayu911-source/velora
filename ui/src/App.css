@@ -100,6 +100,23 @@ button.danger {
   padding: 14px;
 }
 
+.workflow-helper {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #d7dde4;
+}
+
+.workflow-helper ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workflow-helper li {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
 .status-message {
   margin-top: 18px;
   font-weight: 600;
@@ -112,3 +129,100 @@ button.danger {
   border-radius: 8px;
   padding: 12px;
 }
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 70vh;
+  gap: 24px;
+}
+
+.auth-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.auth-tab {
+  padding: 10px 18px;
+  background: #f2f4f7;
+  border: 1px solid #d7dde4;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #333;
+}
+
+.auth-tab.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.auth-card {
+  width: min(520px, 100%);
+  background: #ffffff;
+  border: 1px solid #d7dde4;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.auth-form label,
+.auth-form input {
+  width: 100%;
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-form input {
+  border: 1px solid #cbd2d8;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.auth-form button {
+  padding: 12px 18px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.workspace-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.logout-button {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.dashboard-panel {
+  background: #f8f9fb;
+  border: 1px solid #d7dde4;
+  border-radius: 12px;
+  padding: 22px;
+}
+

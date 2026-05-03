@@ -10,13 +10,13 @@ import (
 
 // DataExtractorAgent extracts structured data from unstructured text.
 type DataExtractorAgent struct {
-	llm services.LLMService
+	LLM *services.LLM
 }
 
 // NewDataExtractorAgent creates a new DataExtractorAgent.
-func NewDataExtractorAgent(llm services.LLMService) *DataExtractorAgent {
+func NewDataExtractorAgent(llm *services.LLM) *DataExtractorAgent {
 	return &DataExtractorAgent{
-		llm: llm,
+		LLM: llm,
 	}
 }
 
@@ -30,9 +30,9 @@ func (a *DataExtractorAgent) Description() string {
 	return "Extracts structured data from unstructured text and formats it as JSON."
 }
 
-// Run executes the agent's primary function: extracting data.
-func (a *DataExtractorAgent) Run(ctx context.Context, input string) (string, error) {
-	if a.llm == nil {
+// Execute executes the agent's primary function: extracting data.
+func (a *DataExtractorAgent) Execute(ctx context.Context, input string) (string, error) {
+	if a.LLM == nil {
 		return "", fmt.Errorf("LLM service is not initialized")
 	}
 
@@ -40,7 +40,7 @@ func (a *DataExtractorAgent) Run(ctx context.Context, input string) (string, err
 	prompt := fmt.Sprintf("Extract the key information from the following text and format it as a JSON object. The keys of the JSON should be descriptive of the data being extracted. Do not include any explanations, just the JSON object itself.\n\nText: %s", input)
 
 	// Generate the data using the LLM service.
-	resp, err := a.llm.Generate(prompt, "gemini-1.5-pro", 0.7, 2048)
+	resp, err := a.LLM.Generate(ctx, prompt)
 	if err != nil {
 		return "", fmt.Errorf("failed to extract data: %w", err)
 	}

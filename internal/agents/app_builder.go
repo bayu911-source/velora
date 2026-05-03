@@ -13,13 +13,13 @@ import (
 
 // AppBuilderAgent builds simple applications based on a description.
 type AppBuilderAgent struct {
-	llm services.LLMService
+	LLM *services.LLM
 }
 
 // NewAppBuilderAgent creates a new AppBuilderAgent.
-func NewAppBuilderAgent(llm services.LLMService) *AppBuilderAgent {
+func NewAppBuilderAgent(llm *services.LLM) *AppBuilderAgent {
 	return &AppBuilderAgent{
-		llm: llm,
+		LLM: llm,
 	}
 }
 
@@ -35,7 +35,7 @@ func (a *AppBuilderAgent) Description() string {
 
 // Execute executes the agent's primary function: building an application.
 func (a *AppBuilderAgent) Execute(ctx context.Context, input string) (string, error) {
-	if a.llm == nil {
+	if a.LLM == nil {
 		return "", fmt.Errorf("LLM service is not initialized")
 	}
 
@@ -44,7 +44,7 @@ func (a *AppBuilderAgent) Execute(ctx context.Context, input string) (string, er
 Application Description: %s`, input)
 
 	// Generate the plan using the LLM service.
-	resp, err := a.llm.Generate(prompt, "gemini-1.5-pro", 0.7, 8192)
+	resp, err := a.LLM.Generate(ctx, prompt)
 	if err != nil {
 		return "", fmt.Errorf("failed to build application: %w", err)
 	}

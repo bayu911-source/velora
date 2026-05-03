@@ -11,11 +11,11 @@ type CustomAgent struct {
 	name        string
 	prompt      string
 	description string
-	llm         services.LLMService
+	llm         *services.LLM
 }
 
 // NewCustomAgent creates a new CustomAgent.
-func NewCustomAgent(name, description, prompt string, llm services.LLMService) *CustomAgent {
+func NewCustomAgent(name, description, prompt string, llm *services.LLM) *CustomAgent {
 	return &CustomAgent{
 		name:        name,
 		description: description,
@@ -34,8 +34,8 @@ func (a *CustomAgent) Description() string {
 	return a.description
 }
 
-// Run runs the agent.
-func (a *CustomAgent) Run(ctx context.Context, input string) (string, error) {
+// Execute executes the agent.
+func (a *CustomAgent) Execute(ctx context.Context, input string) (string, error) {
 	fullPrompt := a.prompt + "\n\n" + input
-	return a.llm.Generate(fullPrompt, "gemini-1.5-pro", 0.7, 1024)
+	return a.llm.Generate(ctx, fullPrompt)
 }

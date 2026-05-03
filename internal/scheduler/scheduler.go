@@ -2,7 +2,9 @@
 package scheduler
 
 import (
+	"context"
 	"fmt"
+	"encoding/json"
 	"velora/internal/workflow"
 
 	"github.com/robfig/cron/v3"
@@ -10,17 +12,17 @@ import (
 
 // Scheduler handles scheduled tasks.
 type Scheduler struct {
-	cron           *cron.Cron
-	pipelineRunner *workflow.PipelineRunner
-	jobs           map[cron.EntryID]string
+	cron   *cron.Cron
+	engine *workflow.Engine
+	jobs   map[cron.EntryID]string
 }
 
 // NewScheduler creates a new Scheduler.
-func NewScheduler(pipelineRunner *workflow.PipelineRunner) *Scheduler {
+func NewScheduler(engine *workflow.Engine) *Scheduler {
 	return &Scheduler{
-		cron:           cron.New(),
-		pipelineRunner: pipelineRunner,
-		jobs:           make(map[cron.EntryID]string),
+		cron:   cron.New(),
+		engine: engine,
+		jobs:   make(map[cron.EntryID]string),
 	}
 }
 
@@ -38,7 +40,17 @@ func (s *Scheduler) Stop() {
 func (s *Scheduler) AddWorkflow(spec, jsonWorkflow string) (cron.EntryID, error) {
 	job := func() {
 		fmt.Printf("Running workflow %s...\n", jsonWorkflow)
-		_, err := s.pipelineRunner.Run(jsonWorkflow)
+		
+		// Parse JSON to Workflow
+		var wf workflow.Workflow
+		if err := json.Unmarshal([]byte(jsonWorkflow), &wf); err != nil {
+			fmt.Printf("Failed to parse workflow JSON: %v\n", err)
+			return
+		}
+		
+		// Run workflow
+		ctx := context.Background()
+		_, err := s.engine.Run(ctx, &wf, "")
 		if err != nil {
 			fmt.Printf("Workflow failed: %v\n", err)
 		}

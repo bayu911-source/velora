@@ -20,6 +20,7 @@ func Execute() {
     rootCmd.AddCommand(NewServerCmd())
     rootCmd.AddCommand(NewWorkerCmd())
     rootCmd.AddCommand(NewSeedCmd())
+    rootCmd.AddCommand(NewWorkflowCmd())
 
     if err := rootCmd.Execute(); err != nil {
         fmt.Println(err)
