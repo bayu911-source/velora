@@ -3,17 +3,15 @@ package agents
 import (
 	"context"
 	"fmt"
-
-	"velora/internal/services"
 )
 
 // EmailWriterAgent generates email copy.
 type EmailWriterAgent struct {
-	LLM *services.LLM
+	LLM LLMService
 }
 
 // NewEmailWriterAgent creates a new EmailWriterAgent.
-func NewEmailWriterAgent(llm *services.LLM) *EmailWriterAgent {
+func NewEmailWriterAgent(llm LLMService) *EmailWriterAgent {
 	return &EmailWriterAgent{
 		LLM: llm,
 	}

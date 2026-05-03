@@ -3,17 +3,15 @@ package agents
 import (
 	"context"
 	"fmt"
-
-	"velora/internal/services"
 )
 
 // TextAnalysisAgent performs analysis on a given text.
 type TextAnalysisAgent struct {
-	LLM *services.LLM
+	LLM LLMService
 }
 
 // NewTextAnalysisAgent creates a new TextAnalysisAgent.
-func NewTextAnalysisAgent(llm *services.LLM) *TextAnalysisAgent {
+func NewTextAnalysisAgent(llm LLMService) *TextAnalysisAgent {
 	return &TextAnalysisAgent{
 		LLM: llm,
 	}

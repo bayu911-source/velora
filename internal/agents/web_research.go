@@ -3,17 +3,15 @@ package agents
 import (
 	"context"
 	"fmt"
-
-	"velora/internal/services"
 )
 
 // WebResearchAgent performs web research and summarizes the findings.
 type WebResearchAgent struct {
-	LLM *services.LLM
+	LLM LLMService
 }
 
 // NewWebResearchAgent creates a new WebResearchAgent.
-func NewWebResearchAgent(llm *services.LLM) *WebResearchAgent {
+func NewWebResearchAgent(llm LLMService) *WebResearchAgent {
 	return &WebResearchAgent{
 		LLM: llm,
 	}

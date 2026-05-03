@@ -7,17 +7,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"velora/internal/services"
 )
 
 // AppBuilderAgent builds simple applications based on a description.
 type AppBuilderAgent struct {
-	LLM *services.LLM
+	LLM LLMService
 }
 
 // NewAppBuilderAgent creates a new AppBuilderAgent.
-func NewAppBuilderAgent(llm *services.LLM) *AppBuilderAgent {
+func NewAppBuilderAgent(llm LLMService) *AppBuilderAgent {
 	return &AppBuilderAgent{
 		LLM: llm,
 	}

@@ -4,17 +4,15 @@ package agents
 import (
 	"context"
 	"fmt"
-
-	"velora/internal/services"
 )
 
 // DataExtractorAgent extracts structured data from unstructured text.
 type DataExtractorAgent struct {
-	LLM *services.LLM
+	LLM LLMService
 }
 
 // NewDataExtractorAgent creates a new DataExtractorAgent.
-func NewDataExtractorAgent(llm *services.LLM) *DataExtractorAgent {
+func NewDataExtractorAgent(llm LLMService) *DataExtractorAgent {
 	return &DataExtractorAgent{
 		LLM: llm,
 	}

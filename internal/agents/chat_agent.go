@@ -2,17 +2,15 @@ package agents
 
 import (
 	"context"
-
-	"velora/internal/services"
 )
 
 // ChatAgent is a conversational agent.
 type ChatAgent struct {
-	llm *services.LLM
+	llm LLMService
 }
 
 // NewChatAgent creates a new ChatAgent.
-func NewChatAgent(llm *services.LLM) *ChatAgent {
+func NewChatAgent(llm LLMService) *ChatAgent {
 	return &ChatAgent{llm: llm}
 }
 

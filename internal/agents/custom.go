@@ -3,7 +3,6 @@ package agents
 
 import (
 	"context"
-	"velora/internal/services"
 )
 
 // CustomAgent is an agent created from a string prompt.
@@ -11,11 +10,11 @@ type CustomAgent struct {
 	name        string
 	prompt      string
 	description string
-	llm         *services.LLM
+	llm         LLMService
 }
 
 // NewCustomAgent creates a new CustomAgent.
-func NewCustomAgent(name, description, prompt string, llm *services.LLM) *CustomAgent {
+func NewCustomAgent(name, description, prompt string, llm LLMService) *CustomAgent {
 	return &CustomAgent{
 		name:        name,
 		description: description,

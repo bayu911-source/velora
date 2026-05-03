@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+// LLMService defines the interface for LLM operations used by agents.
+type LLMService interface {
+	Generate(ctx context.Context, prompt string) (string, error)
+	Close()
+}
+
 // Agent is the interface for all agents.
 type Agent interface {
 	Name() string
