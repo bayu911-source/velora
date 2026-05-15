@@ -5,7 +5,6 @@ import (
     "encoding/json"
     "errors"
     "fmt"
-    "net/http"
     "strings"
     "time"
 
@@ -38,68 +37,6 @@ type TokenClaims struct {
     TenantID string `json:"tenant_id"`
     Role     string `json:"role"`
     jwt.RegisteredClaims
-}
-
-// AIService sends prompts to Gemini and returns generated text.
-type AIService struct {
-    cfg        *config.Config
-    httpClient *http.Client
-}
-
-func NewAIService(cfg *config.Config) *AIService {
-    return &AIService{
-        cfg: cfg,
-        httpClient: &http.Client{Timeout: 20 * time.Second},
-    }
-}
-
-func (s *AIService) Generate(prompt string) (string, error) {
-    if strings.TrimSpace(prompt) == "" {
-        return "", errors.New("prompt cannot be empty")
-    }
-
-    requestBody := map[string]any{
-        "prompt": map[string]any{
-            "text": prompt,
-        },
-        "temperature": 0.7,
-        "maxOutputTokens": 512,
-    }
-    bodyBytes, err := json.Marshal(requestBody)
-    if err != nil {
-        return "", err
-    }
-
-    requestURL := fmt.Sprintf("%s/v1beta2/models/text-bison-001:generate", strings.TrimRight(s.cfg.GeminiAPIURL, "/"))
-    req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, requestURL, strings.NewReader(string(bodyBytes)))
-    if err != nil {
-        return "", err
-    }
-    req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.cfg.GeminiAPIKey))
-    req.Header.Set("Content-Type", "application/json")
-
-    res, err := s.httpClient.Do(req)
-    if err != nil {
-        return "", err
-    }
-    defer res.Body.Close()
-
-    if res.StatusCode >= 300 {
-        return "", fmt.Errorf("gemini returned status %d", res.StatusCode)
-    }
-
-    var response struct {
-        Candidates []struct {
-            Output string `json:"output"`
-        } `json:"candidates"`
-    }
-    if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-        return "", err
-    }
-    if len(response.Candidates) == 0 {
-        return "", errors.New("gemini returned no output")
-    }
-    return response.Candidates[0].Output, nil
 }
 
 // AuthService supports registration, login, and refresh token flows.
@@ -289,11 +226,11 @@ func (s *TenantService) SuspendTenant(id uuid.UUID) error {
 // AgentService orchestrates agent CRUD and prompt generation.
 type AgentService struct {
     repo *repositories.Repository
-    ai   *AIService
+    llm  LLMService
 }
 
-func NewAgentService(repo *repositories.Repository, ai *AIService) *AgentService {
-    return &AgentService{repo: repo, ai: ai}
+func NewAgentService(repo *repositories.Repository, llm LLMService) *AgentService {
+    return &AgentService{repo: repo, llm: llm}
 }
 
 func (s *AgentService) CreateAgent(agent *models.Agent) error {
@@ -326,15 +263,22 @@ func (s *AgentService) RunAgent(tenantID uuid.UUID, agentID uuid.UUID, input str
         prompt = fmt.Sprintf("Run agent %s: %s", agent.Name, input)
     }
     fullPrompt := fmt.Sprintf("%s\n\nInput:\n%s", prompt, input)
-    return s.ai.Generate(fullPrompt)
+    
+    // Default to a sensible model if not specified in config
+    model := "gemini-1.5-flash"
+    if strings.Contains(strings.ToLower(agent.Type), "openai") {
+        model = "gpt-4o-mini"
+    }
+    
+    return s.llm.Generate(fullPrompt, model, 0.7, 1024)
 }
 
 // WorkflowService manages automation definitions and execution.
 type WorkflowService struct {
-    repo       *repositories.Repository
-    agent      *AgentService
-    client     *asynq.Client
-    logger     *zap.Logger
+    repo      *repositories.Repository
+    agent     *AgentService
+    client    *asynq.Client
+    logger    *zap.Logger
 }
 
 func NewWorkflowService(repo *repositories.Repository, agent *AgentService, client *asynq.Client, logger *zap.Logger) *WorkflowService {
@@ -361,7 +305,6 @@ func (s *WorkflowService) ScheduleWorkflow(workflow *models.Workflow) error {
     if workflow.Schedule == "" {
         return nil
     }
-    // schedule is persisted and may be picked up by the worker scheduler
     return s.repo.CreateWorkflow(workflow)
 }
 
@@ -450,11 +393,11 @@ func (s *WorkflowService) HandleWorkflowTask(ctx context.Context, task *asynq.Ta
 // CRMService exposes lead management and scoring.
 type CRMService struct {
     repo *repositories.Repository
-    ai   *AIService
+    llm  LLMService
 }
 
-func NewCRMService(repo *repositories.Repository, ai *AIService) *CRMService {
-    return &CRMService{repo: repo, ai: ai}
+func NewCRMService(repo *repositories.Repository, llm LLMService) *CRMService {
+    return &CRMService{repo: repo, llm: llm}
 }
 
 func (s *CRMService) CreateLead(lead *models.Lead) error {
@@ -474,16 +417,20 @@ func (s *CRMService) ScoreLead(tenantID uuid.UUID, leadID uuid.UUID) error {
     if err != nil {
         return err
     }
-    prompt := fmt.Sprintf("Provide a lead score from 1 to 100 for the following lead: Name=%s, Company=%s, Email=%s", lead.Name, lead.Company, lead.Email)
-    text, err := s.ai.Generate(prompt)
+    prompt := fmt.Sprintf("Provide a lead score from 1 to 100 for the following lead: Name=%s, Company=%s, Email=%s. Return ONLY the number.", lead.Name, lead.Company, lead.Email)
+    text, err := s.llm.Generate(prompt, "gemini-1.5-flash", 0.3, 10)
     if err != nil {
         return err
     }
+    
     score := 50
+    text = strings.TrimSpace(text)
     if parsed, pErr := fmt.Sscanf(text, "%d", &score); pErr == nil && parsed == 1 {
         lead.Score = score
     } else {
-        lead.Score = 50
+        // Try to find a number in the text if Sscanf failed
+        fmt.Sscanf(text, "Score: %d", &score)
+        lead.Score = score
     }
     return s.repo.UpdateLead(lead)
 }
@@ -612,16 +559,21 @@ type Services struct {
 }
 
 func NewServices(cfg *config.Config, repo *repositories.Repository, logger *zap.Logger) *Services {
-    aiService := NewAIService(cfg)
+    llmService, err := NewLLMService(*cfg)
+    if err != nil {
+        logger.Error("failed to initialize LLM service", zap.Error(err))
+    }
+    
     asynqClient := asynq.NewClient(asynq.RedisClientOpt{Addr: cfg.RedisURL})
-    agentService := NewAgentService(repo, aiService)
+    agentService := NewAgentService(repo, llmService)
     workflowService := NewWorkflowService(repo, agentService, asynqClient, logger)
+    
     return &Services{
         Auth:        NewAuthService(cfg, repo),
         Tenant:      NewTenantService(repo),
         Agent:       agentService,
         Workflow:    workflowService,
-        CRM:         NewCRMService(repo, aiService),
+        CRM:         NewCRMService(repo, llmService),
         Integration: NewIntegrationService(repo),
         Billing:     NewBillingService(repo),
         Admin:       NewAdminService(repo),

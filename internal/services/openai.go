@@ -26,6 +26,9 @@ func NewOpenAIService(cfg config.Config) (*OpenAIService, error) {
 
 // Generate generates content from a text prompt.
 func (s *OpenAIService) Generate(prompt, modelName string, temperature float32, maxOutputTokens int) (string, error) {
+	if modelName == "" {
+		modelName = openai.GPT4oMini
+	}
 	resp, err := s.client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{

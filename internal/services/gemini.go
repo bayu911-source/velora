@@ -37,6 +37,9 @@ func NewGeminiService(cfg config.Config) (*GeminiService, error) {
 
 // Generate generates content from a text prompt with configurable parameters.
 func (s *GeminiService) Generate(prompt, modelName string, temperature float32, maxOutputTokens int) (string, error) {
+    if modelName == "" {
+        modelName = "gemini-1.5-flash"
+    }
 	var resp *genai.GenerateContentResponse
 	err := retry.Do(
 		func() error {

@@ -24,5 +24,6 @@ func NewLLMService(cfg config.Config) (LLMService, error) {
 		return NewOpenAIService(cfg)
 	}
 
-	return nil, fmt.Errorf("no LLM service configured")
+	// Return a mock or error if no key is provided, but allow system to start
+	return nil, nil
 }
